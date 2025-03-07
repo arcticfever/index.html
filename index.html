@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitmap Text Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: #111;
+            color: #eee;
+        }
+        
+        body {
+            display: flex;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            background-color: black;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .controls {
+            width: 280px;
+            height: 100vh;
+            padding: 20px;
+            background-color: #1a1a1a;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        
+        h2 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #ccc;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 12px;
+            background: #333;
+            height: 6px;
+            -webkit-appearance: none;
+            border-radius: 3px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        input[type="text"], 
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            background-color: #222;
+            color: #eee;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            background-color: #222;
+            color: #eee;
+            min-height: 60px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+        
+        button:hover {
+            background-color: #444;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .value-display {
+            font-size: 12px;
+            color: #aaa;
+            text-align: right;
+            margin-top: -12px;
+            margin-bottom: 12px;
+        }
+        
+        .color-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .color-input {
+            flex: 1;
+        }
+        
+        .color-input input {
+            width: 100%;
+            height: 30px;
+            padding: 0;
+            border: 1px solid #444;
+            background: #222;
+        }
+        
+        #custom-font-name {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+        
+        #play-pause-btn {
+            background-color: #444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 500;
+            width: 100%;
+        }
+        
+        #play-pause-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        #play-pause-btn:hover {
+            background-color: #555;
+        }
+        
+        #status {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 15px;
+            padding: 5px;
+            background: #222;
+            border-radius: 4px;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .button-group button {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .switch-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .switch-container label {
+            margin-bottom: 0;
+            margin-right: 10px;
+            flex: 1;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #666;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            background: #333;
+            color: #aaa;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            color: #fff;
+            border-bottom: 2px solid #666;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+    
+    <div class="controls">
+        <h1>Bitmap Text Controls</h1>
+        
+        <button id="play-pause-btn">
+            <svg id="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <svg id="pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+            <span id="play-pause-text">Pause</span>
+        </button>
+        
+        <div id="status">Ready</div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="text-tab">Text Input</div>
+            <div class="tab" data-tab="cycle-tab">Character Cycle</div>
+        </div>
+        
+        <div class="control-group">
+            <div id="text-tab" class="tab-content active">
+                <h2>Text Input</h2>
+                <label for="text-input">Enter Text</label>
+                <textarea id="text-input">A</textarea>
+                
+                <label for="text-align">Text Alignment</label>
+                <select id="text-align">
+                    <option value="center">Center</option>
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                </select>
+                
+                <label for="line-height">Line Height</label>
+                <input type="range" id="line-height" min="0.8" max="2" step="0.1" value="1.2">
+                <div class="value-display" id="line-height-value">1.2</div>
+            </div>
+            
+            <div id="cycle-tab" class="tab-content">
+                <h2>Character Cycling</h2>
+                <div class="button-group">
+                    <button id="randomize-btn">Randomize</button>
+                </div>
+                
+                <div class="switch-container">
+                    <label for="auto-cycle">Auto Cycle Characters</label>
+                    <label class="switch">
+                        <input type="checkbox" id="auto-cycle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <label for="cycle-speed">Cycle Speed</label>
+                <input type="range" id="cycle-speed" min="0.1" max="5" step="0.1" value="1">
+                <div class="value-display" id="cycle-speed-value">1.0</div>
+                
+                <label for="character-set">Character Set</label>
+                <select id="character-set">
+                    <option value="alphabet">Alphabet</option>
+                    <option value="numbers">Numbers</option>
+                    <option value="symbols">Symbols</option>
+                    <option value="all">All Characters</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h2>Bitmap Properties</h2>
+            <label for="dot-size">Dot Size</label>
+            <input type="range" id="dot-size" min="1" max="20" value="4">
+            <div class="value-display" id="dot-size-value">4</div>
+            
+            <label for="dot-spacing">Dot Spacing</label>
+            <input type="range" id="dot-spacing" min="1" max="20" value="8">
+            <div class="value-display" id="dot-spacing-value">8</div>
+            
+            <label for="threshold">Threshold</label>
+            <input type="range" id="threshold" min="0" max="255" value="10">
+            <div class="value-display" id="threshold-value">10</div>
+            
+            <label for="dot-shape">Dot Shape</label>
+            <select id="dot-shape">
+                <option value="circle">Circle</option>
+                <option value="square">Square</option>
+                <option value="diamond">Diamond</option>
+                <option value="cross">Cross</option>
+            </select>
+            
+            <div class="color-inputs">
+                <div class="color-input">
+                    <label for="dot-color">Dot Color</label>
+                    <input type="color" id="dot-color" value="#ffffff">
+                </div>
+                <div class="color-input">
+                    <label for="bg-color">Background</label>
+                    <input type="color" id="bg-color" value="#000000">
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h2>Font Settings</h2>
+            <label for="font-size">Font Size</label>
+            <input type="range" id="font-size" min="10" max="200" value="60">
+            <div class="value-display" id="font-size-value">60</div>
+            
+            <label for="font-weight">Font Weight</label>
+            <input type="range" id="font-weight" min="100" max="900" step="100" value="700">
+            <div class="value-display" id="font-weight-value">700</div>
+            
+            <label for="font-family">Current Font</label>
+            <select id="font-family">
+                <option value="Helvetica Neue">Helvetica Neue</option>
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Impact">Impact</option>
+            </select>
+            
+            <label>Upload Custom Font</label>
+            <button id="upload-font-btn">Upload Font File</button>
+            <input type="file" id="font-file" class="file-input" accept=".ttf,.otf,.woff,.woff2">
+            <div id="custom-font-name">No custom font loaded</div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const speedInput = document.getElementById('cycle-speed');
+        const speedValue = document.getElementById('cycle-speed-value');
+        const dotSizeInput = document.getElementById('dot-size');
+        const dotSizeValue = document.getElementById('dot-size-value');
+        const dotSpacingInput = document.getElementById('dot-spacing');
+        const dotSpacingValue = document.getElementById('dot-spacing-value');
+        const thresholdInput = document.getElementById('threshold');
+        const thresholdValue = document.getElementById('threshold-value');
+        const dotShapeSelect = document.getElementById('dot-shape');
+        const dotColorInput = document.getElementById('dot-color');
+        const bgColorInput = document.getElementById('bg-color');
+        const fontSizeInput = document.getElementById('font-size');
+        const fontSizeValue = document.getElementById('font-size-value');
+        const fontWeightInput = document.getElementById('font-weight');
+        const fontWeightValue = document.getElementById('font-weight-value');
+        const fontFamilySelect = document.getElementById('font-family');
+        const uploadFontBtn = document.getElementById('upload-font-btn');
+        const fontFileInput = document.getElementById('font-file');
+        const customFontName = document.getElementById('custom-font-name');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const playPauseText = document.getElementById('play-pause-text');
+        const statusEl = document.getElementById('status');
+        const randomizeBtn = document.getElementById('randomize-btn');
+        const autoCycleToggle = document.getElementById('auto-cycle');
+        const characterSetSelect = document.getElementById('character-set');
+        const textInput = document.getElementById('text-input');
+        const textAlignSelect = document.getElementById('text-align');
+        const lineHeightInput = document.getElementById('line-height');
+        const lineHeightValue = document.getElementById('line-height-value');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Character sets
+        const characterSets = {
+            alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+            numbers: '0123456789',
+            symbols: '!@#$%^&*()_+-=[]{}|;:,./<>?~`"\'\\',
+            all: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,./<>?~`"\'\\',
+        };
+        
+        // Animation variables
+        let animationId = null;
+        let cycleTime = 0;
+        let currentCharIndex = 0;
+        let customFontLoaded = false;
+        let customFontFamily = '';
+        let fontStyleSheet = null;
+        let isPlaying = true;
+        let activeTabId = 'text-tab';
+        
+        // Set up tabs
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+                activeTabId = tabId;
+                
+                if (!isPlaying) {
+                    drawFrame();
+                }
+            });
+        });
+        
+        // Helper function to log status
+        function logStatus(message) {
+            statusEl.textContent = message;
+            console.log(message);
+        }
+        
+        // Canvas setup
+        const setCanvasSize = () => {
+            const containerWidth = document.querySelector('.canvas-container').clientWidth;
+            const containerHeight = document.querySelector('.canvas-container').clientHeight;
+            const size = Math.min(containerWidth, containerHeight) - 40;
+            
+            canvas.width = size;
+            canvas.height = size;
+            
+            logStatus(`Canvas resized to ${size}x${size}`);
+            
+            // Force redraw
+            if (!isPlaying) {
+                drawFrame();
+            }
+        };
+        
+        // Get current character based on cycle time
+        function getCurrentCharacter() {
+            const charSet = characterSets[characterSetSelect.value];
+            return charSet[currentCharIndex % charSet.length];
+        }
+        
+        // Get a random character from the selected set
+        function getRandomCharacter() {
+            const charSet = characterSets[characterSetSelect.value];
+            return charSet[Math.floor(Math.random() * charSet.length)];
+        }
+        
+        // Initial setup - using timeout to ensure DOM is fully loaded
+        window.addEventListener('DOMContentLoaded', () => {
+            logStatus('DOM loaded, initializing...');
+            setTimeout(() => {
+                setCanvasSize();
+                drawFrame(); // Draw initial frame
+                startAnimation(); // Start animation loop
+                logStatus('Animation started');
+            }, 100);
+        });
+        
+        window.addEventListener('resize', setCanvasSize);
+        
+        // Play/Pause functionality
+        playPauseBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            
+            if (isPlaying) {
+                startAnimation();
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+                playPauseText.textContent = 'Pause';
+                logStatus('Animation resumed');
+            } else {
+                stopAnimation();
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+                playPauseText.textContent = 'Play';
+                logStatus('Animation paused');
+            }
+        });
+        
+        // Randomize button
+        randomizeBtn.addEventListener('click', () => {
+            currentCharIndex = Math.floor(Math.random() * characterSets[characterSetSelect.value].length);
+            logStatus(`Randomized to character: ${getCurrentCharacter()}`);
+            if (!isPlaying) {
+                drawFrame();
+            }
+        });
+        
+        function startAnimation() {
+            if (animationId) return; // Don't start if already running
+            logStatus('Starting animation loop');
+            animate();
+        }
+        
+        function stopAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                logStatus('Animation stopped');
+            }
+        }
+        
+        // Update value displays
+        speedInput.addEventListener('input', () => {
+            speedValue.textContent = parseFloat(speedInput.value).toFixed(1);
+        });
+        
+        lineHeightInput.addEventListener('input', () => {
+            lineHeightValue.textContent = parseFloat(lineHeightInput.value).toFixed(1);
+            if (!isPlaying) drawFrame();
+        });
+        
+        dotSizeInput.addEventListener('input', () => {
+            dotSizeValue.textContent = dotSizeInput.value;
+            if (!isPlaying) drawFrame(); // Update immediately if paused
+        });
+        
+        dotSpacingInput.addEventListener('input', () => {
+            dotSpacingValue.textContent = dotSpacingInput.value;
+            if (!isPlaying) drawFrame(); // Update immediately if paused
+        });
+        
+        thresholdInput.addEventListener('input', () => {
+            thresholdValue.textContent = thresholdInput.value;
+            if (!isPlaying) drawFrame(); // Update immediately if paused
+        });
+        
+        fontSizeInput.addEventListener('input', () => {
+            fontSizeValue.textContent = fontSizeInput.value;
+            if (!isPlaying) drawFrame(); // Update immediately if paused
+        });
+        
+        fontWeightInput.addEventListener('input', () => {
+            fontWeightValue.textContent = fontWeightInput.value;
+            if (!isPlaying) drawFrame(); // Update immediately if paused
+        });
+        
+        // Update when controls change
+        textInput.addEventListener('input', () => {
+            if (!isPlaying) drawFrame();
+        });
+        
+        textAlignSelect.addEventListener('change', () => {
+            if (!isPlaying) drawFrame();
+        });
+        
+        characterSetSelect.addEventListener('change', () => {
+            currentCharIndex = 0; // Reset character index when changing sets
+            if (!isPlaying) drawFrame();
+        });
+        
+        dotShapeSelect.addEventListener('change', () => {
+            if (!isPlaying) drawFrame();
+        });
+        
+        dotColorInput.addEventListener('input', () => {
+            if (!isPlaying) drawFrame();
+        });
+        
+        bgColorInput.addEventListener('input', () => {
+            if (!isPlaying) drawFrame();
+        });
+        
+        fontFamilySelect.addEventListener('change', () => {
+            if (!isPlaying) drawFrame();
+        });
+        
+        // Font upload handling
+        uploadFontBtn.addEventListener('click', () => {
+            fontFileInput.click();
+        });
+        
+        fontFileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length === 0) return;
+            
+            const file = e.target.files[0];
+            customFontName.textContent = `Loading ${file.name}...`;
+            logStatus(`Loading font: ${file.name}`);
+            
+            try {
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    try {
+                        // Create a unique font family name
+                        customFontFamily = 'CustomFont_' + Date.now();
+                        
+                        // Get the base64 data
+                        const base64Font = event.target.result;
+                        
+                        // Create or update a style element for the font
+                        if (!fontStyleSheet) {
+                            fontStyleSheet = document.createElement('style');
+                            document.head.appendChild(fontStyleSheet);
+                        }
+                        
+                        // Add the @font-face rule
+                        fontStyleSheet.textContent = `
+                            @font-face {
+                                font-family: "${customFontFamily}";
+                                src: url("${base64Font}") format("${getFormatFromFileName(file.name)}");
+                                font-weight: normal;
+                                font-style: normal;
+                            }
+                        `;
+                        
+                        // Add to select and select it
+                        const options = Array.from(fontFamilySelect.options);
+                        const existingOption = options.find(option => option.value === customFontFamily);
+                        
+                        if (existingOption) {
+                            existingOption.selected = true;
+                        } else {
+                            const option = document.createElement('option');
+                            option.value = customFontFamily;
+                            option.textContent = file.name;
+                            option.selected = true;
+                            fontFamilySelect.appendChild(option);
+                        }
+                        
+                        customFontLoaded = true;
+                        customFontName.textContent = file.name;
+                        logStatus(`Font loaded: ${file.name}`);
+                        
+                        // Force a redraw 
+                        setTimeout(() => {
+                            customFontLoaded = true;
+                            if (!isPlaying) drawFrame();
+                        }, 100);
+                        
+                    } catch (err) {
+                        console.error('Error processing font:', err);
+                        customFontName.textContent = 'Error processing font: ' + err.message;
+                        logStatus(`Font error: ${err.message}`);
+                    }
+                };
+                
+                reader.onerror = function() {
+                    customFontName.textContent = 'Error reading font file';
+                    logStatus('Error reading font file');
+                };
+                
+                // Read the file as a data URL
+                reader.readAsDataURL(file);
+                
+            } catch (err) {
+                console.error('Error handling font:', err);
+                customFontName.textContent = 'Error handling font: ' + err.message;
+                logStatus(`Font handling error: ${err.message}`);
+            }
+        });
+        
+        // Helper function to get the font format from filename
+        function getFormatFromFileName(fileName) {
+            const extension = fileName.split('.').pop().toLowerCase();
+            switch (extension) {
+                case 'ttf': return 'truetype';
+                case 'otf': return 'opentype';
+                case 'woff': return 'woff';
+                case 'woff2': return 'woff2';
+                default: return 'truetype'; // default fallback
+            }
+        }
+        
+        // Render a dot at the specified position with the current shape
+        function renderDot(x, y, size, shape, color) {
+            ctx.fillStyle = color;
+            
+            switch (shape) {
+                case 'square':
+                    ctx.fillRect(x - size/2, y - size/2, size, size);
+                    break;
+                    
+                case 'diamond':
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - size/2);
+                    ctx.lineTo(x + size/2, y);
+                    ctx.lineTo(x, y + size/2);
+                    ctx.lineTo(x - size/2, y);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+                    
+                case 'cross':
+                    const barWidth = size / 3;
+                    ctx.fillRect(x - barWidth/2, y - size/2, barWidth, size);
+                    ctx.fillRect(x - size/2, y - barWidth/2, size, barWidth);
+                    break;
+                    
+                case 'circle':
+                default:
+                    ctx.beginPath();
+                    ctx.arc(x, y, size/2, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+            }
+        }
+        
+        // Draw multi-line text
+        function drawText(tempCtx, text, posX, posY, fontSize, fontWeight, fontFamily, align, lineHeight) {
+            const lines = text.split('\n');
+            const lineHeightPx = fontSize * lineHeight;
+            
+            // Calculate total text height
+            const totalHeight = lineHeightPx * (lines.length - 1) + fontSize;
+            const startY = posY - totalHeight / 2 + fontSize / 2;
+            
+            tempCtx.font = `${fontWeight} ${fontSize}px "${fontFamily}"`;
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.textBaseline = 'middle';
+            
+            lines.forEach((line, index) => {
+                tempCtx.textAlign = align;
+                const y = startY + index * lineHeightPx;
+                
+                let x = posX;
+                if (align === 'left') {
+                    x = 20; // Left margin
+                } else if (align === 'right') {
+                    x = tempCtx.canvas.width - 20; // Right margin
+                }
+                
+                tempCtx.fillText(line, x, y);
+            });
+        }
+        
+        // Draw a single frame with current settings
+        function drawFrame() {
+            if (!canvas.width || !canvas.height) {
+                logStatus('Canvas dimensions not set, skipping frame');
+                return;
+            }
+            
+            // Get common values
+            const dotSize = parseInt(dotSizeInput.value);
+            const dotSpacing = parseInt(dotSpacingInput.value);
+            const threshold = parseInt(thresholdInput.value);
+            const dotShape = dotShapeSelect.value;
+            const dotColor = dotColorInput.value;
+            const bgColor = bgColorInput.value;
+            const fontSize = parseInt(fontSizeInput.value);
+            const fontWeight = fontWeightInput.value;
+            const fontFamily = customFontLoaded && fontFamilySelect.value === customFontFamily 
+                             ? customFontFamily 
+                             : fontFamilySelect.value;
+            
+            // Clear canvas
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            try {
+                // Create temporary canvas for character rendering
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Fill temp canvas with black background
+                tempCtx.fillStyle = '#000000';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // Position in center
+                const posX = canvas.width / 2;
+                const posY = canvas.height / 2;
+                
+                // Choose text based on active tab
+                let text = '';
+                if (activeTabId === 'text-tab') {
+                    text = textInput.value || 'A';
+                    const align = textAlignSelect.value;
+                    const lineHeight = parseFloat(lineHeightInput.value);
+                    
+                    // Draw multi-line text
+                    drawText(tempCtx, text, posX, posY, fontSize, fontWeight, fontFamily, align, lineHeight);
+                } else {
+                    // Character cycling mode
+                    text = getCurrentCharacter();
+                    
+                    // Set font
+                    tempCtx.font = `${fontWeight} ${fontSize}px "${fontFamily}"`;
+                    tempCtx.fillStyle = '#ffffff';
+                    tempCtx.textAlign = 'center';
+                    tempCtx.textBaseline = 'middle';
+                    tempCtx.fillText(text, posX, posY);
+                }
+                
+                // Get image data from temp canvas
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const data = imageData.data;
+                
+                let dotCount = 0;
+                
+                // Render dots based on threshold
+                for (let y = 0; y < tempCanvas.height; y += dotSpacing) {
+                    for (let x = 0; x < tempCanvas.width; x += dotSpacing) {
+                        const index = (y * tempCanvas.width + x) * 4;
+                        // Use brightness for threshold check
+                        const brightness = (data[index] + data[index + 1] + data[index + 2]) / 3;
+                        
+                        if (brightness > threshold) {
+                            renderDot(x, y, dotSize, dotShape, dotColor);
+                            dotCount++;
+                        }
+                    }
+                }
+                
+                if (dotCount === 0) {
+                    // Draw direct text as fallback
+                    ctx.fillStyle = dotColor;
+                    
+                    if (activeTabId === 'text-tab') {
+                        const align = textAlignSelect.value;
+                        const lineHeight = parseFloat(lineHeightInput.value);
+                        drawText(ctx, text, posX, posY, fontSize, fontWeight, fontFamily, align, lineHeight);
+                    } else {
+                        ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}"`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(text, posX, posY);
+                    }
+                    
+                    logStatus(`No dots found at threshold ${threshold}, showing fallback`);
+                } else {
+                    logStatus(`Rendered frame with ${dotCount} dots`);
+                }
+                
+            } catch (e) {
+                console.error("Error rendering:", e);
+                logStatus(`Render error: ${e.message}`);
+                
+                // Draw simple fallback
+                ctx.fillStyle = dotColor;
+                ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}"`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                if (activeTabId === 'text-tab') {
+                    const align = textAlignSelect.value;
+                    const lineHeight = parseFloat(lineHeightInput.value);
+                    drawText(ctx, textInput.value || 'A', canvas.width / 2, canvas.height / 2, 
+                            fontSize, fontWeight, fontFamily, align, lineHeight);
+                } else {
+                    ctx.fillText(getCurrentCharacter(), canvas.width / 2, canvas.height / 2);
+                }
+            }
+        }
+        
+        // Main animation loop
+        function animate() {
+            if (activeTabId === 'cycle-tab' && autoCycleToggle.checked) {
+                const speed = parseFloat(speedInput.value);
+                cycleTime += 0.01 * speed;
+                
+                // Change character every second (adjust based on speed)
+                if (cycleTime >= 1) {
+                    cycleTime = 0;
+                    currentCharIndex = (currentCharIndex + 1) % characterSets[characterSetSelect.value].length;
+                }
+            }
+            
+            drawFrame();
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // Apply initial values to displays
+        speedValue.textContent = speedInput.value;
+        lineHeightValue.textContent = lineHeightInput.value;
+        dotSizeValue.textContent = dotSizeInput.value;
+        dotSpacingValue.textContent = dotSpacingInput.value;
+        thresholdValue.textContent = thresholdInput.value;
+        fontSizeValue.textContent = fontSizeInput.value;
+        fontWeightValue.textContent = fontWeightInput.value;
+    </script>
+</body>
+</html>
