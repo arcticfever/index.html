@@ -333,7 +333,7 @@
             <div id="text-tab" class="tab-content active">
                 <h2>Text Input</h2>
                 <label for="text-input">Enter Text</label>
-                <textarea id="text-input">A</textarea>
+                <textarea id="text-input">Arctic Fever</textarea>
                 
                 <label for="text-align">Text Alignment</label>
                 <select id="text-align">
@@ -395,6 +395,7 @@
                 <option value="square">Square</option>
                 <option value="diamond">Diamond</option>
                 <option value="cross">Cross</option>
+                <option value="heart">Heart</option>
             </select>
             
             <div class="color-inputs">
@@ -771,6 +772,26 @@
                     ctx.fillRect(x - size/2, y - size/2, size, size);
                     break;
                     
+                case 'heart':
+                    // Draw a heart shape
+                    const s = size * 0.8; // Scale for better proportions
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + s/4);
+                    // Left curve
+                    ctx.bezierCurveTo(
+                        x - s/2, y - s/2, // Control point 1
+                        x - s, y, // Control point 2
+                        x, y + s/2 // End point
+                    );
+                    // Right curve
+                    ctx.bezierCurveTo(
+                        x + s, y, // Control point 1
+                        x + s/2, y - s/2, // Control point 2
+                        x, y + s/4 // End point
+                    );
+                    ctx.fill();
+                    break;
+
                 case 'diamond':
                     ctx.beginPath();
                     ctx.moveTo(x, y - size/2);
